@@ -7,6 +7,17 @@
 
 namespace puppup {
 namespace movegen {
+
+struct Move {
+    idx score;
+    trie::nodeid node;
+    idx cursor;
+    idx step;
+    idx blanks;
+    bool operator<(const Move& other) const { return score < other.score; }
+    bool operator>(const Move& other) const { return score > other.score; }
+};
+
 namespace __impl {
 inline idx turn(idx step) {
     if (step == 1 || step == -1) {
@@ -21,12 +32,12 @@ inline idx turn(idx step) {
 /**
  * generates all moves from a state recursively
  */
-void gen(Rack& r, idx step, idx cursor, idx orig_cursor, trie::Node* node,
-         trie::Node* root, board::State& state, idx non_multipliable_score,
-         idx multipliable_score, idx word_mult,
-         std::vector<board::State>& outputs);
+void gen(Rack& r, idx step, idx cursor, idx orig_cursor, trie::nodeid node,
+         const trie::Gaddag& gaddag, board::State& state,
+         idx non_multipliable_score, idx multipliable_score, idx word_mult,
+         std::vector<Move>& outputs, idx blanks = 0, idx placed = 0);
 
-idx orthogonal(idx step, idx cursor, trie::Node* node,
+idx orthogonal(idx step, idx cursor, const trie::Gaddag& gaddag,
                const board::State& state);
 
 inline bool edge(idx cursor) {
@@ -34,17 +45,37 @@ inline bool edge(idx cursor) {
 }
 }  // __impl
 
-inline std::vector<board::State> genFromIdx(
-    Rack r, const std::unique_ptr<trie::Node>& gaddag,
-    board::State state = board::State(), const idx cursor = board::start) {
-    std::vector<board::State> outputs;
-    __impl::gen(r, -1, cursor, cursor, gaddag.get(), gaddag.get(), state, 0, 0,
-                1, outputs);
+inline void makeMove(board::State& state, const Move& mov,
+                     const trie::Gaddag& gaddag) {
+    const auto& s = gaddag.getString(mov.node);
+    idx cursor = mov.cursor - s.size() * mov.step;
+
+    for (const chr c : s) {
+        if (state.board[cursor] == emptiness) {
+            state.board[cursor] = c;
+            state.letter_score[cursor] = scores[c];
+        }
+        cursor += mov.step;
+    }
+    idx blanks = mov.blanks;
+    while (blanks) {
+        idx blank_cursor = (blanks & idx(0xffffLL)) - 1;
+        blanks >>= idx(16LL);
+        state.letter_score[blank_cursor] = 0;
+    }
+    state.score += mov.score;
+}
+
+inline std::vector<Move> genFromIdx(Rack r, const trie::Gaddag& gaddag,
+                                    board::State state = board::State(),
+                                    const idx cursor = board::start) {
+    std::vector<Move> outputs;
+    __impl::gen(r, -1, cursor, cursor, 0, gaddag, state, 0, 0, 1, outputs);
     return outputs;
 }
 
-inline std::vector<board::State> genFromBoard(
-    Rack r, const std::unique_ptr<trie::Node>& gaddag, board::State state) {
+inline std::vector<Move> genFromBoard(Rack r, const trie::Gaddag& gaddag,
+                                      board::State state) {
     std::array<bool, 256> buildable;
     buildable.fill(false);
     for (idx i = 0; i < 240; i++) {
@@ -61,28 +92,18 @@ inline std::vector<board::State> genFromBoard(
         }
     }
 
-    /*
-    board::State zxcv = state;
-    for (idx i = 0; i < 240; i++) {
-        if (buildable[i]) {
-            zxcv.board[i] = gaddag_marker;
-        }
-    }
-    board::print(zxcv);
-    */
-
-    std::vector<board::State> outputs;
+    std::vector<Move> outputs;
     constexpr std::array<idx, 2> steps{{1, 16}};
     idx n_buildable = 0;
     for (idx step : steps) {
         for (idx i = 0; i < 240; i++) {
             if (buildable[i]) {
                 if (!buildable[i - step]) {
-                    __impl::gen(r, -step, i, i, gaddag.get(), gaddag.get(),
-                                state, 0, 0, 1, outputs);
+                    __impl::gen(r, -step, i, i, 0, gaddag, state, 0, 0, 1,
+                                outputs);
                 } else {
-                    __impl::gen(r, step, i, i, gaddag->at(gaddag_marker),
-                                gaddag.get(), state, 0, 0, 1, outputs);
+                    __impl::gen(r, step, i, i, gaddag.get(0, trie::rev_marker),
+                                gaddag, state, 0, 0, 1, outputs);
                 }
                 n_buildable++;
             }

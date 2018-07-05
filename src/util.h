@@ -4,10 +4,10 @@
 #include <string>
 
 using idx = std::ptrdiff_t;
+using chr = idx;
 namespace puppup {
-constexpr idx gaddag_marker = 31;
-constexpr idx emptiness = 27;
-constexpr idx blank = 26;
+constexpr chr emptiness = 27;
+constexpr chr blank = 26;
 const std::string idxstr = "eiaontrsuldgywvpmhfcbzxqkj_    +";
 const std::string idxSTR = "EIAONTRSULDGYWVPMHFCBZXQKJ_    +";
 const std::string ABC = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";

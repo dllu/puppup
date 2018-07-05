@@ -4,27 +4,25 @@
 namespace puppup {
 namespace movegen {
 namespace __impl {
-void gen(Rack& r, idx step, idx cursor, idx orig_cursor, trie::Node* node,
-         trie::Node* root, board::State& state, idx non_multipliable_score,
-         idx multipliable_score, idx word_mult,
-         std::vector<board::State>& outputs) {
+void gen(Rack& r, idx step, idx cursor, idx orig_cursor, trie::nodeid node,
+         const trie::Gaddag& gaddag, board::State& state,
+         idx non_multipliable_score, idx multipliable_score, idx word_mult,
+         std::vector<Move>& outputs, idx blanks, idx placed) {
     // we have gone far enough in the reverse direction, time to turn around
     if (cursor != orig_cursor && step < 0 &&
-        (node->children[gaddag_marker] &&
+        (gaddag.has(node, trie::rev_marker) &&
          (edge(cursor) || state.board[cursor] == emptiness))) {
-        gen(r, -step, orig_cursor - step, orig_cursor, node->at(gaddag_marker),
-            root, state, non_multipliable_score, multipliable_score, word_mult,
-            outputs);
+        gen(r, -step, orig_cursor - step, orig_cursor,
+            gaddag.get(node, trie::rev_marker), gaddag, state,
+            non_multipliable_score, multipliable_score, word_mult, outputs,
+            blanks, placed);
     }
     // we have found a valid word
-    if (step > 0 && node->exists &&
+    if (step > 0 && gaddag.exists(node) &&
         (edge(cursor) || state.board[cursor] == emptiness)) {
-        outputs.push_back(state);
-        outputs.back().score +=
-            non_multipliable_score + multipliable_score * word_mult;
-        if (std::accumulate(r.begin(), r.end(), idx(0)) == 0) {
-            outputs.back().score += 50;
-        }
+        idx score = non_multipliable_score + multipliable_score * word_mult;
+        if (placed >= 7) score += 50;
+        outputs.push_back({score, node, cursor, step, blanks});
     }
     // we have gone out of bounds
     if (edge(cursor)) {
@@ -33,21 +31,26 @@ void gen(Rack& r, idx step, idx cursor, idx orig_cursor, trie::Node* node,
     // traverse over undiscovered land
     if (state.board[cursor] == emptiness) {
         idx word_mult_new = word_mult * board::word_multiplier[cursor];
-        for (idx j = 0; j < emptiness; j++) {
-            if (!node->children[j]) continue;
-            auto evaluate = [&](idx i) {
+        for (chr j = 0; j < emptiness; j++) {
+            if (!gaddag.has(node, j)) continue;
+            auto evaluate = [&](const chr i) {
                 r[i]--;
                 state.board[cursor] = j;
                 state.letter_score[cursor] = scores[i];
-                idx orth_score = orthogonal(turn(step), cursor, root, state);
+                idx newblanks = blanks;
+                if (i == blank) {
+                    newblanks <<= idx(16LL);
+                    newblanks |= cursor + 1;
+                }
+                idx orth_score = orthogonal(turn(step), cursor, gaddag, state);
                 if (orth_score >= 0) {
-                    gen(r, step, cursor + step, orig_cursor, node->at(j), root,
-                        state, non_multipliable_score + orth_score,
+                    gen(r, step, cursor + step, orig_cursor,
+                        gaddag.get(node, j), gaddag, state,
+                        non_multipliable_score + orth_score,
                         multipliable_score +
                             scores[i] * board::letter_multiplier[cursor],
-                        word_mult_new, outputs);
+                        word_mult_new, outputs, newblanks, placed + 1);
                 }
-                // backtrack
                 state.board[cursor] = emptiness;
                 state.letter_score[cursor] = 0;
                 r[i]++;
@@ -57,42 +60,43 @@ void gen(Rack& r, idx step, idx cursor, idx orig_cursor, trie::Node* node,
         }
     } else {
         // traverse over existing tiles
-        const idx i = state.board[cursor];
-        if (node->children[i]) {
-            gen(r, step, cursor + step, orig_cursor, node->at(i), root, state,
-                non_multipliable_score,
+        const chr i = state.board[cursor];
+        if (gaddag.has(node, i)) {
+            gen(r, step, cursor + step, orig_cursor, gaddag.get(node, i),
+                gaddag, state, non_multipliable_score,
                 multipliable_score + state.letter_score[cursor], word_mult,
-                outputs);
+                outputs, blanks, placed);
         }
     }
 }
 
-idx orthogonal(idx step, idx cursor, trie::Node* node,
+idx orthogonal(idx step, idx cursor, const trie::Gaddag& gaddag,
                const board::State& state) {
     const idx orig_cursor = cursor;
     idx score = state.letter_score[cursor] * board::letter_multiplier[cursor];
-    node = node->at(state.board[cursor]);
+
+    chr node = gaddag.get(0, state.board[cursor]);
     cursor += step;
     idx depth = 0;
     while (!edge(cursor) && state.board[cursor] != emptiness) {
         score += state.letter_score[cursor];
-        if (!node->children[state.board[cursor]]) return -1;
-        node = node->at(state.board[cursor]);
+        if (!gaddag.has(node, state.board[cursor])) return -1;
+        node = gaddag.get(node, state.board[cursor]);
         cursor += step;
         depth++;
     }
-    if (!node->children[gaddag_marker]) return -1;
-    node = node->at(gaddag_marker);
+    if (!gaddag.has(node, trie::rev_marker)) return -1;
+    node = gaddag.get(node, trie::rev_marker);
     step = -step;
     cursor = orig_cursor + step;
     while (!edge(cursor) && state.board[cursor] != emptiness) {
         score += state.letter_score[cursor];
-        if (!node->children[state.board[cursor]]) return -1;
-        node = node->at(state.board[cursor]);
+        if (!gaddag.has(node, state.board[cursor])) return -1;
+        node = gaddag.get(node, state.board[cursor]);
         cursor += step;
         depth++;
     }
-    if (depth > 0 && !node->exists) return -1;
+    if (depth > 0 && !gaddag.exists(node)) return -1;
     score *= board::word_multiplier[orig_cursor];
     if (depth == 0) score = 0;
     return score;
