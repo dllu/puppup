@@ -1,8 +1,8 @@
 # Puppup: Basic crossword game engine
 
-Suggests moves for crossword games such as Scrabble and Words with Friends using a [gaddag](https://en.wikipedia.org/wiki/GADDAG).
+Suggests moves for crossword games such as [Scrabble](https://en.wikipedia.org/wiki/Scrabble) and Words with Friends using a [gaddag](https://en.wikipedia.org/wiki/GADDAG).
 
-![screenshot](https://pics.dllu.net/file/dllu-sc/c3f100da1a.png)
+![screenshot](https://pics.dllu.net/file/dllu-sc/21b3b15938.png)
 
 # About
 
@@ -14,10 +14,21 @@ A GADDAG is a type of directed acyclic word graph (DAWG) where each word is stor
 
 # Build
 
-You need CMake
+You need CMake and a reasonably new GCC or Clang compiler supporting C++14.
 
 ```
 mkdir build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make
 ```
+
+# Running
+
+Puppup outputs [ANSI colour codes](https://en.wikipedia.org/wiki/ANSI_escape_code#Colors), so be sure to use a terminal that supports this.
+You need to supply your own dictionary (a text file with one word per line).
+
+```
+./puppup word_list.txt
+```
+
+The word list is not provided with puppup (see: [Who owns Scrabble's word list?](http://www.slate.com/articles/life/gaming/2014/09/major_scrabble_brouhaha_can_you_copyright_a_list_of_words.html)).

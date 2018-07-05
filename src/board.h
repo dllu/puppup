@@ -56,36 +56,52 @@ struct State {
     bool operator>(const State& other) const { return score > other.score; }
 };
 
-inline void print(const State& state) {
-    std::cerr << "Score: " << state.score << std::endl;
+inline void print(const State& state, const State& other) {
+    std::cout << "Score: " << state.score << std::endl;
     for (idx i = 0; i < 15; i++) {
-        std::cerr << "ABCDEFGHIJKLMNOPQRSTUV"[i] << "  ";
+        std::cout << "ABCDEFGHIJKLMNOPQRSTUV"[i] << " ";
         for (idx j = 0; j < 15; j++) {
             if (state.board[i * 16 + j] != emptiness) {
-                if (state.letter_score[i * 16 + j] == 0) {
-                    std::cerr << "\033[1;33m" << idxstr[state.board[i * 16 + j]]
-                              << "\033[0m  ";
+                if (state.board[i * 16 + j] == other.board[i * 16 + j]) {
+                    if (state.letter_score[i * 16 + j] == 0) {
+                        std::cout << "\033[1;103;31m "
+                                  << idxSTR[state.board[i * 16 + j]]
+                                  << " \033[0m";
+                    } else {
+                        std::cout << "\033[1;103;30m "
+                                  << idxSTR[state.board[i * 16 + j]]
+                                  << " \033[0m";
+                    }
                 } else {
-                    std::cerr << "\033[1;37m" << idxstr[state.board[i * 16 + j]]
-                              << "\033[0m  ";
+                    if (state.letter_score[i * 16 + j] == 0) {
+                        std::cout << "\033[1;33;31m "
+                                  << idxSTR[state.board[i * 16 + j]]
+                                  << " \033[0m";
+                    } else {
+                        std::cout << "\033[1;37;40m "
+                                  << idxSTR[state.board[i * 16 + j]]
+                                  << " \033[0m";
+                    }
                 }
             } else {
                 if (letter_multiplier[i * 16 + j] == 2) {
-                    std::cerr << "\033[1;36m+\033[0m  ";
+                    std::cout << "\033[1;46m + \033[0m";
                 } else if (letter_multiplier[i * 16 + j] == 3) {
-                    std::cerr << "\033[1;34m+\033[0m  ";
+                    std::cout << "\033[1;104m + \033[0m";
                 } else if (word_multiplier[i * 16 + j] == 2) {
-                    std::cerr << "\033[1;35m+\033[0m  ";
+                    std::cout << "\033[1;45m + \033[0m";
                 } else if (word_multiplier[i * 16 + j] == 3) {
-                    std::cerr << "\033[1;31m+\033[0m  ";
+                    std::cout << "\033[1;41m + \033[0m";
                 } else {
-                    std::cerr << "   ";
+                    std::cout << "\033[47m   \33[0m";
                 }
             }
         }
-        std::cerr << std::endl;
+        std::cout << "\n";
     }
-    std::cerr << "   1  2  3  4  5  6  7  8  9 10 11 12 13 14 15" << std::endl;
+    std::cout << "   1  2  3  4  5  6  7  8  9 10 11 12 13 14 15" << std::endl;
 }
+
+inline void print(const State& state) { print(state, state); }
 }
 }
