@@ -21,14 +21,25 @@ class Game {
           gaddag_(gaddag) {
         for (idx i = 0; i < 240; i++) {
             if (state.board[i] != emptiness) {
-                population_[state.board[i]]--;
+                if (state.letter_score[i] == 0) {
+                    population_[blank]--;
+                } else {
+                    population_[state.board[i]]--;
+                }
             }
         }
         for (chr i = 0; i < 32; i++) {
             population_[i] -= rack[i];
         }
     }
-    void genRack(idx r) { fillRack(racks_[r]); }
+    void genRack(idx r) {
+        if (std::accumulate(population_.begin(), population_.end(), idx(0)) ==
+            0) {
+            out_of_tiles_ = true;
+            return;
+        }
+        fillRack(racks_[r]);
+    }
 
     void ply(movegen::Move m) {
         if (winner_ != -1) {
@@ -50,24 +61,22 @@ class Game {
         idx blocked = 0;
         while (winner_ == -1 && numply--) {
             auto moves =
-                movegen::genFromBoard(racks_[turn_], gaddag_, state_, true);
+                movegen::genFromBoard(racks_[turn_], gaddag_, state_, false);
             if (!moves.empty()) {
                 blocked = 0;
-                /*
                 const idx n = moves.size();
                 std::vector<idx> move_scores(n);
                 for (idx i = 0; i < n; i++) {
-                    move_scores[i] = moves[i].score;
+                    move_scores[i] = moves[i].score * moves[i].score;
                 }
                 std::discrete_distribution<idx> distribution(
                     move_scores.begin(), move_scores.end());
                 idx drawn = distribution(*gen_);
-                    */
                 /*
                 std::sort(moves.begin(), moves.end(),
                           std::greater<puppup::movegen::Move>());
                           */
-                idx drawn = 0;
+                // idx drawn = 0;
                 // movegen::print(moves[drawn], state_, gaddag_);
                 ply(moves[drawn]);
             } else {
@@ -85,38 +94,43 @@ class Game {
         return winner_;
     }
 
-    idx winProbability(idx samples, const movegen::Move& mov, idx max_losses) {
+    idx score() const {
+        if (turn_ == 0)
+            return state_.score;
+        else
+            return -state_.score;
+    }
+
+    idx winProbability(idx samples, const movegen::Move& mov) {
         ply(mov);
         idx wins = 0;
         idx trial = 0;
+
+        idx sumscore = 0;
         for (; trial < samples; trial++) {
             Game other(*this);
             other.genRack(1);
-            idx winner = other.rollout(4);
+            idx winner = other.rollout(999);
             if (winner == 0) {
                 wins++;
             }
-            if (trial + 1 - wins >= max_losses) {
-                trial++;
-                break;
-            }
+            sumscore += other.score();
         }
-        std::cerr << "Random sample results: " << wins << " / " << trial
-                  << std::endl;
-        return wins;
+        std::cerr << "Random sample results: " << wins << " / " << trial << "; "
+                  << sumscore << std::endl;
+        return sumscore;
     }
 
-    movegen::Move thinkyThinky(idx max_moves = 10, idx samples = 300) {
+    movegen::Move thinkyThinky(idx max_moves = 5, idx samples = 200) {
         auto moves = movegen::genFromBoard(racks_[turn_], gaddag_, state_);
         std::set<movegen::Move, std::greater<movegen::Move>> moves_set(
             moves.begin(), moves.end());
         movegen::Move best = moves[0];
-        idx best_prob = 0;
+        idx best_prob = -9999999999LL;
         for (auto& mov : moves_set) {
             movegen::print(mov, state_, gaddag_);
             Game other(*this);
-            const idx prob =
-                other.winProbability(samples, mov, samples - best_prob);
+            const idx prob = other.winProbability(samples, mov);
             if (prob > best_prob) {
                 best = mov;
                 best_prob = prob;
@@ -143,8 +157,15 @@ class Game {
     }
     template <class T>
     void fillRack(T& container) {
+        if (out_of_tiles_) {
+            return;
+        }
         const idx need =
             7 - std::accumulate(container.begin(), container.end(), idx(0));
+        // std::cerr << "container before: ";
+        // print(container);
+        // std::cerr << "population before: ";
+        // print(population_);
         for (idx adds = 0; adds < need; adds++) {
             std::discrete_distribution<idx> distribution(population_.begin(),
                                                          population_.end());
@@ -158,6 +179,10 @@ class Game {
                 break;
             }
         }
+        // std::cerr << "container after: ";
+        // print(container);
+        // std::cerr << "population after: ";
+        // print(population_);
     }
     std::shared_ptr<std::mt19937> gen_;
     idx turn_;

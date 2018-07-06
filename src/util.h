@@ -20,11 +20,14 @@ const Rack starting_population{{12, 9, 9, 8, 6, 6, 6, 4, 4, 4, 4,
                                 1,  1, 1, 1, 2, 0, 0, 0, 0, 0}};
 const Rack empty_rack{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
-inline void print(const Rack &rack) {
+inline void print(const Rack& rack) {
     for (chr i = 0; i < 32; i++) {
-        for (idx j =0; j < rack[i]; j++) {
+        for (idx j = 0; j < rack[i]; j++) {
             std::cout << idxstr[i];
         }
+    }
+    for (chr i = 0; i < 32; i++) {
+        std::cout << rack[i] << " ";
     }
     std::cout << std::endl;
 }
