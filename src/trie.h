@@ -69,6 +69,40 @@ class Gaddag {
                 node_to_word_[curr] = w;
             }
         }
+        const nodeid n_nodes = nodes_.size();
+        next_sibling_.resize(n_nodes);
+        first_child_.resize(n_nodes);
+        val_.resize(n_nodes);
+        for (nodeid node = 0; node < n_nodes; node++) {
+            for (chr child_chr = 0; child_chr < 32; child_chr++) {
+                nodeid child = get(node, child_chr);
+                if (child != invalid) {
+                    val_[child] = child_chr;
+                }
+            }
+            for (chr child_chr = 0; child_chr < 32; child_chr++) {
+                nodeid child = get(node, child_chr);
+                if (child != invalid) {
+                    first_child_[node] = child;
+                    break;
+                }
+            }
+            nodeid last = invalid;
+            for (chr child_chr = 0; child_chr < 32; child_chr++) {
+                nodeid child = get(node, child_chr);
+                if (child != invalid) {
+                    if (last != invalid) {
+                        next_sibling_[last] = child;
+                    }
+                    last = child;
+                }
+            }
+            if (last != invalid) {
+                next_sibling_[last] = invalid;
+            } else {
+                first_child_[node] = invalid;
+            }
+        }
     }
 
     void add(const nodeid curr, const chr child) {
@@ -84,17 +118,30 @@ class Gaddag {
     const bool has(const nodeid curr, const chr child) const {
         return get(curr, child) != invalid;
     }
-    const std::vector<chr>& getString(const nodeid curr) const {
-        return words_[node_to_word_[curr]];
+    const std::vector<chr>& getStringFromWord(const idx word) const {
+        return words_[word];
+    }
+    const idx nodeToWord(const nodeid curr) const {
+        return node_to_word_[curr];
     }
     const bool exists(const nodeid curr) const {
         return node_to_word_[curr] != invalid;
     }
+    const nodeid nextSibling(const nodeid curr) const {
+        return next_sibling_[curr];
+    }
+    const nodeid firstChild(const nodeid curr) const {
+        return first_child_[curr];
+    }
+    const chr val(const nodeid curr) const { return val_[curr]; }
 
    private:
     std::vector<std::vector<chr>> words_;
     std::vector<Node> nodes_;
     std::vector<idx> node_to_word_;
+    std::vector<nodeid> next_sibling_;
+    std::vector<nodeid> first_child_;
+    std::vector<chr> val_;
 };
 }
 }

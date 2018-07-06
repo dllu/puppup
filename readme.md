@@ -2,7 +2,7 @@
 
 Suggests moves for crossword games such as [Scrabble](https://en.wikipedia.org/wiki/Scrabble) and Words with Friends using a [gaddag](https://en.wikipedia.org/wiki/GADDAG).
 
-![screenshot](https://pics.dllu.net/file/dllu-sc/21b3b15938.png)
+![screenshot](https://pics.dllu.net/file/dllu-sc/1485531d49.png)
 
 # About
 

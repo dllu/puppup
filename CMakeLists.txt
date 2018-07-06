@@ -15,6 +15,7 @@ set(SCRABBLE_INCLUDE_DIRS
 set(CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS} -std=c++14 -march=native -Wall -Werror")
 set(CMAKE_CXX_FLAGS_DEBUG   "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Ofast")
+set(LLVM_OPT_IR_FLAGS "-inline-threshold=10000")
 
 ################################################################
 

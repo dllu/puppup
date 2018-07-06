@@ -7,7 +7,8 @@ namespace __impl {
 void gen(Rack& r, idx step, idx cursor, idx orig_cursor, trie::nodeid node,
          const trie::Gaddag& gaddag, board::State& state,
          idx non_multipliable_score, idx multipliable_score, idx word_mult,
-         std::vector<Move>& outputs, idx blanks, idx placed) {
+         std::vector<Move>& outputs, const bool best_only, idx blanks,
+         idx placed) {
     // we have gone far enough in the reverse direction, time to turn around
     if (cursor != orig_cursor && step < 0 &&
         (gaddag.has(node, trie::rev_marker) &&
@@ -15,14 +16,22 @@ void gen(Rack& r, idx step, idx cursor, idx orig_cursor, trie::nodeid node,
         gen(r, -step, orig_cursor - step, orig_cursor,
             gaddag.get(node, trie::rev_marker), gaddag, state,
             non_multipliable_score, multipliable_score, word_mult, outputs,
-            blanks, placed);
+            best_only, blanks, placed);
     }
     // we have found a valid word
     if (step > 0 && gaddag.exists(node) &&
         (edge(cursor) || state.board[cursor] == emptiness)) {
         idx score = non_multipliable_score + multipliable_score * word_mult;
         if (placed >= 7) score += 50;
-        outputs.push_back({score, node, cursor, step, blanks});
+        if (!best_only || outputs.empty()) {
+            outputs.push_back(
+                {score, gaddag.nodeToWord(node), cursor, step, blanks});
+        } else {
+            if (score > outputs.back().score) {
+                outputs.back() = {score, gaddag.nodeToWord(node), cursor, step,
+                                  blanks};
+            }
+        }
     }
     // we have gone out of bounds
     if (edge(cursor)) {
@@ -31,6 +40,12 @@ void gen(Rack& r, idx step, idx cursor, idx orig_cursor, trie::nodeid node,
     // traverse over undiscovered land
     if (state.board[cursor] == emptiness) {
         idx word_mult_new = word_mult * board::word_multiplier[cursor];
+        /*
+        for (trie::nodeid child = gaddag.firstChild(node);
+             child != trie::invalid; child = gaddag.nextSibling(child)) {
+            chr j = gaddag.val(child);
+            if (j >= emptiness) break;
+            */
         for (chr j = 0; j < emptiness; j++) {
             if (!gaddag.has(node, j)) continue;
             auto evaluate = [&](const chr i) {
@@ -49,7 +64,8 @@ void gen(Rack& r, idx step, idx cursor, idx orig_cursor, trie::nodeid node,
                         non_multipliable_score + orth_score,
                         multipliable_score +
                             scores[i] * board::letter_multiplier[cursor],
-                        word_mult_new, outputs, newblanks, placed + 1);
+                        word_mult_new, outputs, best_only, newblanks,
+                        placed + 1);
                 }
                 state.board[cursor] = emptiness;
                 state.letter_score[cursor] = 0;
@@ -65,7 +81,7 @@ void gen(Rack& r, idx step, idx cursor, idx orig_cursor, trie::nodeid node,
             gen(r, step, cursor + step, orig_cursor, gaddag.get(node, i),
                 gaddag, state, non_multipliable_score,
                 multipliable_score + state.letter_score[cursor], word_mult,
-                outputs, blanks, placed);
+                outputs, best_only, blanks, placed);
         }
     }
 }
