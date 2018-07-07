@@ -57,20 +57,10 @@ int main(int argc, char** argv) {
     }
     auto coords = genCoords();
 
-    // while (true) {
     puppup::Rack r{puppup::empty_rack};
-    puppup::board::State state;
 
-    /*
-    // for (char c : std::string("quetzal")) {
-    for (char c : std::string("vuvucww")) {
-        r[stridx[c]]++;
-    }
-
+    const puppup::board::State state;
     puppup::Game game(state, r, puppup::starting_population, gaddag, gen);
-    game.winProbability(500);
-    return 0;
-    */
     // std::ifstream test_fin("../test.txt");
     std::string s;
     while (std::getline(std::cin, s)) {
@@ -79,24 +69,20 @@ int main(int argc, char** argv) {
                 std::cerr << "No tiles in rack!" << std::endl;
                 return;
             }
-            state.score = 0;
             auto tic = std::chrono::steady_clock::now();
             auto moves = puppup::movegen::genFromBoard(r, gaddag, state);
             std::sort(moves.begin(), moves.end(),
                       std::greater<puppup::movegen::Move>());
 
             auto toc = std::chrono::steady_clock::now();
-            puppup::Game game(state, r, puppup::starting_population, gaddag,
-                              gen);
             puppup::movegen::Move best = game.thinkyThinky();
 
             auto tac = std::chrono::steady_clock::now();
 
             {
-                auto state2 = state;
-                puppup::Rack tmp{puppup::empty_rack};
-                makeMove(state2, tmp, best, gaddag);
-                puppup::board::print(state2, state);
+                auto state2 = game.state_;
+                makeMove(state2, best, gaddag);
+                puppup::board::print(state2, game.state_);
             }
 
             std::chrono::duration<double> elapsed = toc - tic;
@@ -115,26 +101,27 @@ int main(int argc, char** argv) {
             for (char c : argument) {
                 r[stridx[c]]++;
             }
+            game.setRack(r);
+            game.turn_ ^= 1;
+            game.setRack(puppup::empty_rack);
+            game.turn_ ^= 1;
             go();
         } else if (coords.count(command)) {
             auto step_cur = coords[command];
             ss >> argument;
             idx cur = step_cur.second;
             idx step = step_cur.first;
-            for (char c : argument) {
-                if (c >= 'a' && c <= 'z') {
-                    idx ch = stridx[c];
-                    state.board[cur] = ch;
-                    state.letter_score[cur] = puppup::scores[ch];
-                } else if (c >= 'A' && c <= 'Z') {
-                    idx ch = stridx[c - 'A' + 'a'];
-                    state.board[cur] = ch;
-                    state.letter_score[cur] = 0;
-                }
-                cur += step;
-            }
+            puppup::movegen::Move mov = puppup::movegen::moveCommand(
+                step, cur, argument, game.state_, gaddag);
+            puppup::movegen::print(mov, game.state_, gaddag);
+            game.ply(mov, false);
+            puppup::board::print(game.state_);
         } else if (command == "go") {
             go();
+        } else if (command == "pass") {
+            game.turn_ ^= 1;
+            game.state_.score *= -1;
+            puppup::board::print(game.state_);
         }
         // }
         // std::this_thread::sleep_for(std::chrono::milliseconds(17));

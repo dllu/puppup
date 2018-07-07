@@ -32,6 +32,12 @@ class Game {
             population_[i] -= rack[i];
         }
     }
+    void setRack(Rack r) {
+        for (chr i = 0; i < 32; i++) {
+            population_[i] += racks_[turn_][i] - r[i];
+            racks_[turn_][i] = r[i];
+        }
+    }
     void genRack(idx r) {
         if (std::accumulate(population_.begin(), population_.end(), idx(0)) ==
             0) {
@@ -41,17 +47,19 @@ class Game {
         fillRack(racks_[r]);
     }
 
-    void ply(movegen::Move m) {
+    void ply(movegen::Move m, const bool fill_rack = true) {
         if (winner_ != -1) {
             return;
         }
-        movegen::makeMove(state_, racks_[turn_], m, gaddag_);
-        if (!out_of_tiles_) {
-            fillRack(racks_[turn_]);
-        } else if (!std::accumulate(racks_[turn_].begin(), racks_[turn_].end(),
-                                    idx(0))) {
-            checkWinner();
-            return;
+        movegen::makeMove(state_, racks_[turn_], population_, m, gaddag_);
+        if (fill_rack) {
+            if (!out_of_tiles_) {
+                fillRack(racks_[turn_]);
+            } else if (!std::accumulate(racks_[turn_].begin(),
+                                        racks_[turn_].end(), idx(0))) {
+                checkWinner();
+                return;
+            }
         }
         turn_ ^= 1;
         state_.score *= -1;
@@ -75,8 +83,9 @@ class Game {
                 /*
                 std::sort(moves.begin(), moves.end(),
                           std::greater<puppup::movegen::Move>());
-                          */
-                // idx drawn = 0;
+                idx drawn = 0;
+                */
+
                 // movegen::print(moves[drawn], state_, gaddag_);
                 ply(moves[drawn]);
             } else {
@@ -101,39 +110,48 @@ class Game {
             return -state_.score;
     }
 
-    idx winProbability(idx samples, const movegen::Move& mov) {
-        ply(mov);
+    idx winProbability(const idx samples, const movegen::Move& mov,
+                       const idx maxfails) {
         idx wins = 0;
         idx trial = 0;
 
         idx sumscore = 0;
         for (; trial < samples; trial++) {
+            if (trial - wins >= maxfails) {
+                break;
+            }
             Game other(*this);
             other.genRack(1);
+            other.ply(mov);
+            // print(other.racks_[0]);
+            // print(other.racks_[1]);
             idx winner = other.rollout(999);
             if (winner == 0) {
                 wins++;
             }
+            // std::cerr << "trial score: " << other.score() << std::endl;
             sumscore += other.score();
         }
         std::cerr << "Random sample results: " << wins << " / " << trial << "; "
                   << sumscore << std::endl;
-        return sumscore;
+        return wins;
     }
 
-    movegen::Move thinkyThinky(idx max_moves = 5, idx samples = 200) {
+    movegen::Move thinkyThinky(idx max_moves = 15, const idx samples = 500) {
         auto moves = movegen::genFromBoard(racks_[turn_], gaddag_, state_);
         std::set<movegen::Move, std::greater<movegen::Move>> moves_set(
             moves.begin(), moves.end());
         movegen::Move best = moves[0];
         idx best_prob = -9999999999LL;
+        idx maxfails = samples;
         for (auto& mov : moves_set) {
             movegen::print(mov, state_, gaddag_);
             Game other(*this);
-            const idx prob = other.winProbability(samples, mov);
+            const idx prob = other.winProbability(samples, mov, maxfails);
             if (prob > best_prob) {
                 best = mov;
                 best_prob = prob;
+                maxfails = samples - prob;
             }
 
             max_moves--;
@@ -142,7 +160,8 @@ class Game {
         return best;
     }
 
-   private:
+    // private:
+   public:
     void checkWinner() {
         for (chr i = 0; i < 27; i++) {
             state_.score += scores[i] * racks_[turn_ ^ 1][i];

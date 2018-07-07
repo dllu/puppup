@@ -7,8 +7,8 @@ namespace __impl {
 void gen(Rack& r, idx step, idx cursor, idx orig_cursor, trie::nodeid node,
          const trie::Gaddag& gaddag, board::State& state,
          idx non_multipliable_score, idx multipliable_score, idx word_mult,
-         std::vector<Move>& outputs, const bool best_only, idx blanks,
-         idx placed) {
+         std::vector<Move>& outputs, const bool best_only,
+         std::array<idx, 256 * 32>& orthogonal_memo, idx blanks, idx placed) {
     // we have gone far enough in the reverse direction, time to turn around
     if (cursor != orig_cursor && step < 0 &&
         (gaddag.has(node, trie::rev_marker) &&
@@ -16,10 +16,10 @@ void gen(Rack& r, idx step, idx cursor, idx orig_cursor, trie::nodeid node,
         gen(r, -step, orig_cursor - step, orig_cursor,
             gaddag.get(node, trie::rev_marker), gaddag, state,
             non_multipliable_score, multipliable_score, word_mult, outputs,
-            best_only, blanks, placed);
+            best_only, orthogonal_memo, blanks, placed);
     }
     // we have found a valid word
-    if (step > 0 && gaddag.exists(node) &&
+    if (!(step == 1 && placed == 1) && step > 0 && gaddag.exists(node) &&
         (edge(cursor) || state.board[cursor] == emptiness)) {
         idx score = non_multipliable_score + multipliable_score * word_mult;
         if (placed >= 7) score += 50;
@@ -57,15 +57,19 @@ void gen(Rack& r, idx step, idx cursor, idx orig_cursor, trie::nodeid node,
                     newblanks <<= idx(16LL);
                     newblanks |= cursor + 1;
                 }
-                idx orth_score = orthogonal(turn(step), cursor, gaddag, state);
+                idx orth_score = orthogonal_memo[cursor * 32 + j];
+                if (orth_score == -2) {
+                    orth_score = orthogonal(turn(step), cursor, gaddag, state);
+                    orthogonal_memo[cursor * 32 + j] = orth_score;
+                }
                 if (orth_score >= 0) {
                     gen(r, step, cursor + step, orig_cursor,
                         gaddag.get(node, j), gaddag, state,
                         non_multipliable_score + orth_score,
                         multipliable_score +
                             scores[i] * board::letter_multiplier[cursor],
-                        word_mult_new, outputs, best_only, newblanks,
-                        placed + 1);
+                        word_mult_new, outputs, best_only, orthogonal_memo,
+                        newblanks, placed + 1);
                 }
                 state.board[cursor] = emptiness;
                 state.letter_score[cursor] = 0;
@@ -81,13 +85,17 @@ void gen(Rack& r, idx step, idx cursor, idx orig_cursor, trie::nodeid node,
             gen(r, step, cursor + step, orig_cursor, gaddag.get(node, i),
                 gaddag, state, non_multipliable_score,
                 multipliable_score + state.letter_score[cursor], word_mult,
-                outputs, best_only, blanks, placed);
+                outputs, best_only, orthogonal_memo, blanks, placed);
         }
     }
 }
 
 idx orthogonal(idx step, idx cursor, const trie::Gaddag& gaddag,
                const board::State& state) {
+    if (state.board[cursor + step] == emptiness &&
+        state.board[cursor - step] == emptiness) {
+        return 0;
+    }
     const idx orig_cursor = cursor;
     idx score = state.letter_score[cursor] * board::letter_multiplier[cursor];
 
