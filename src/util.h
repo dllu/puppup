@@ -1,10 +1,12 @@
 #pragma once
 #include <array>
+#include <iostream>
 #include <locale>
 #include <string>
 
 using idx = std::ptrdiff_t;
 using chr = idx;
+
 namespace puppup {
 constexpr chr emptiness = 27;
 constexpr chr blank = 26;
@@ -33,19 +35,19 @@ std::array<idx, N> constArray(idx x) {
     std::array<idx, N> a;
     a.fill(x);
     return a;
-};
+}
 
 const Rack empty_rack = constArray<32>(0);
 
 inline void print(const Rack& rack) {
-    for (chr i = 0; i < 32; i++) {
-        for (idx j = 0; j < rack[i]; j++) {
+    for (chr i = 0; i < 32; ++i) {
+        for (idx j = 0; j < rack[i]; ++j) {
             std::cout << idxstr[i];
         }
     }
-    for (chr i = 0; i < 32; i++) {
+    for (chr i = 0; i < 32; ++i) {
         std::cout << rack[i] << " ";
     }
     std::cout << std::endl;
 }
-}
+}  // namespace puppup
