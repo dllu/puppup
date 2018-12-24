@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 2.8)
 project(puppup)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
-find_package(Eigen3 REQUIRED)
-
 set(SCRABBLE_INCLUDE_DIRS
 	${PROJECT_SOURCE_DIR}/src
 	${PROJECT_SOURCE_DIR}/third-party
