@@ -138,7 +138,7 @@ class Game {
         return wins;
     }
 
-    movegen::Move thinkyThinky(idx max_moves = 5, const idx samples = 50) {
+    movegen::Move thinkyThinky(idx max_moves = 10, const idx samples = 50) {
         auto moves = movegen::genFromBoard(racks_[turn_], gaddag_, state_);
         std::set<movegen::Move, std::greater<movegen::Move>> moves_set(
             moves.begin(), moves.end());

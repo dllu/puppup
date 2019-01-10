@@ -156,7 +156,7 @@ inline Move moveCommand(idx step, idx cursor, std::string word_s,
         }
         cursor += step;
     }
-    const idx bingo = placed >= 7 ? 50 : 0;
+    const idx bingo = placed >= 7 ? bingo_bonus : 0;
     const idx score =
         non_multipliable_score + word_mult * multipliable_score + bingo;
     // std::cerr << "nms: " << non_multipliable_score << std::endl;
