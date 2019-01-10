@@ -33,7 +33,7 @@ class Game {
         }
     }
     void setRack(idx turn, Rack r) {
-        for (chr i = 0; i < 32; i++) {
+        for (chr i = 0; i < 32; ++i) {
             population_[i] += racks_[turn][i] - r[i];
             racks_[turn][i] = r[i];
         }
@@ -143,8 +143,8 @@ class Game {
         std::set<movegen::Move, std::greater<movegen::Move>> moves_set(
             moves.begin(), moves.end());
         movegen::Move best = *moves_set.begin();
-        //auto best_prob = -9999999999LL;
-        //idx maxfails = samples;
+        // auto best_prob = -9999999999LL;
+        // idx maxfails = samples;
         for (auto& mov : moves_set) {
             movegen::print(mov, state_, gaddag_);
             /*

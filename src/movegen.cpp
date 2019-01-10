@@ -23,7 +23,7 @@ void gen(Rack& r, idx step, idx cursor, idx orig_cursor, trie::nodeid node,
     if (placed > 0 && step > 0 && gaddag.exists(node) &&
         (edge(cursor) || state.board[cursor] == emptiness)) {
         idx score = non_multipliable_score + multipliable_score * word_mult;
-        if (placed >= 7) score += board::bingo_bonus;
+        if (placed >= 7) score += bingo_bonus;
         if (!best_only || outputs.empty()) {
             outputs.push_back(
                 {score, gaddag.nodeToWord(node), cursor, step, blanks});

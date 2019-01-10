@@ -1,6 +1,7 @@
 #pragma once
-#define scrabble
+#include <iomanip>
 #include <iostream>
+#include "defines.h"
 #include "util.h"
 
 namespace puppup {
@@ -8,7 +9,8 @@ namespace board {
 constexpr idx start = 7 + 7 * 16;
 // clang-format off
 #ifdef scrabble
-constexpr idx bingo_bonus = 50;
+constexpr idx board_min = 0;
+constexpr idx board_max = 14;
 constexpr idx word_multiplier[256] = {
     3, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 3, 0,
     1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 0,
@@ -47,7 +49,8 @@ constexpr idx letter_multiplier[256] = {
 #endif
 
 #ifdef wwf1
-constexpr idx bingo_bonus = 35;
+constexpr idx board_min = 2;
+constexpr idx board_max = 12;
 constexpr idx word_multiplier[256] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -86,6 +89,8 @@ constexpr idx letter_multiplier[256] = {
 #endif
 
 #ifdef wwf2
+constexpr idx board_min = 0;
+constexpr idx board_max = 14;
 constexpr idx bingo_bonus = 35;
 constexpr idx word_multiplier[256] = {
     1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 0,
@@ -140,9 +145,9 @@ struct State {
 
 inline void print(const State& state, const State& other) {
     std::cout << "Score: " << state.score << std::endl;
-    for (idx i = 0; i < 15; ++i) {
-        std::cout << "ABCDEFGHIJKLMNOPQRSTUV"[i] << " ";
-        for (idx j = 0; j < 15; ++j) {
+    for (idx i = board_min; i <= board_max; ++i) {
+        std::cout << ABC[i - board_min] << " ";
+        for (idx j = board_min; j <= board_max; ++j) {
             if (state.board[i * 16 + j] != emptiness) {
                 if (state.board[i * 16 + j] == other.board[i * 16 + j]) {
                     if (state.letter_score[i * 16 + j] == 0) {
@@ -181,7 +186,11 @@ inline void print(const State& state, const State& other) {
         }
         std::cout << "\n";
     }
-    std::cout << "   1  2  3  4  5  6  7  8  9 10 11 12 13 14 15" << std::endl;
+    std::cout << " ";
+    for (idx j = board_min; j <= board_max; ++j) {
+        std::cout << std::setfill(' ') << std::setw(3) << j + 1 - board_min;
+    }
+    std::cout << std::endl;
 }
 
 inline void print(const State& state) { print(state, state); }

@@ -3,6 +3,7 @@
 #include <iostream>
 #include <locale>
 #include <string>
+#include "defines.h"
 
 using idx = std::ptrdiff_t;
 using chr = idx;
@@ -15,12 +16,21 @@ constexpr char idxSTR[] = "EIAONTRSULDGYWVPMHFCBZXQKJ_    +";
 constexpr char ABC[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 constexpr char abc[] = "abcdefghijklmnopqrstuvwxyz";
 using Rack = std::array<idx, 32>;
+#ifdef scrabble
+constexpr idx bingo_bonus = 50;
 constexpr Rack scores{{1, 1, 1, 1, 1, 1,  1, 1,  1, 1, 2, 2, 4, 4, 4, 3,
                        3, 4, 4, 3, 3, 10, 8, 10, 5, 8, 0, 0, 0, 0, 0, 0}};
 constexpr Rack starting_population{{12, 9, 9, 8, 6, 6, 6, 4, 4, 4, 4,
                                     3,  2, 2, 2, 2, 2, 2, 2, 2, 2, 1,
                                     1,  1, 1, 1, 2, 0, 0, 0, 0, 0}};
-
+#else
+constexpr idx bingo_bonus = 35;
+constexpr Rack scores{{1, 1, 1, 1, 2, 1,  1, 1,  2, 2,  2, 3, 3, 4, 5, 4,
+                       4, 3, 4, 4, 4, 10, 8, 10, 5, 10, 0, 0, 0, 0, 0, 0}};
+constexpr Rack starting_population{{13, 8, 9, 8, 5, 7, 6, 4, 4, 5, 3,
+                                    2,  2, 2, 2, 2, 2, 2, 2, 2, 2, 1,
+                                    1,  1, 1, 1, 2, 0, 0, 0, 0, 0}};
+#endif
 constexpr idx stridx[] = {
     30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
     30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,

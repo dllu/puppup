@@ -8,6 +8,7 @@
 #include <unordered_map>
 
 #include "board.h"
+#include "defines.h"
 #include "game.h"
 #include "movegen.h"
 #include "trie.h"

@@ -172,8 +172,8 @@ inline std::string toString(const Move& mov, board::State state,
     makeMove(state, mov, gaddag);
     const auto& s = gaddag.getStringFromWord(mov.word);
     idx cursor = mov.cursor - s.size() * mov.step;
-    idx x = cursor % 16;
-    idx y = cursor / 16;
+    idx x = cursor % 16 - board::board_min;
+    idx y = cursor / 16 - board::board_min;
     if (mov.step == 16) {
         ss << x + 1 << ABC[y] << " ";
     } else {
@@ -231,10 +231,9 @@ inline std::vector<Move> genFromBoard(Rack r, const trie::Gaddag& gaddag,
 
     std::vector<Move> outputs;
     idx n_buildable = 0;
-    idx last_n = 0;
     for (idx step : {1, 16}) {
         auto orthogonal_memo = constArray<256 * 32 * 2>(-2);
-        for (idx i = 0; i < 240; i++) {
+        for (idx i = 0; i < 240; ++i) {
             if (buildable[i]) {
                 bool needs_both_directions = false;
                 // todo: faster method than this ridiculous O(n^3) one
@@ -265,10 +264,6 @@ inline std::vector<Move> genFromBoard(Rack r, const trie::Gaddag& gaddag,
                                 gaddag, state, 0, 0, 1, outputs, best_only,
                                 orthogonal_memo);
                 }
-                for (idx k = last_n; k < outputs.size(); k++) {
-                    // print(outputs[k], state, gaddag);
-                }
-                last_n = outputs.size();
                 ++n_buildable;
             }
         }
