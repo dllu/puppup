@@ -19,16 +19,16 @@ class Game {
           out_of_tiles_(false),
           winner_(-1),
           gaddag_(gaddag) {
-        for (idx i = 0; i < 240; i++) {
+        for (idx i = 0; i < 240; ++i) {
             if (state.board[i] != emptiness) {
                 if (state.letter_score[i] == 0) {
-                    population_[blank]--;
+                    --population_[blank];
                 } else {
-                    population_[state.board[i]]--;
+                    --population_[state.board[i]];
                 }
             }
         }
-        for (chr i = 0; i < 32; i++) {
+        for (chr i = 0; i < 32; ++i) {
             population_[i] -= rack[i];
         }
     }
@@ -74,7 +74,7 @@ class Game {
                 blocked = 0;
                 const idx n = moves.size();
                 std::vector<idx> move_scores(n);
-                for (idx i = 0; i < n; i++) {
+                for (idx i = 0; i < n; ++i) {
                     move_scores[i] = moves[i].score * moves[i].score;
                 }
                 std::discrete_distribution<idx> distribution(
@@ -89,7 +89,7 @@ class Game {
                 // movegen::print(moves[drawn], state_, gaddag_);
                 ply(moves[drawn]);
             } else {
-                blocked++;
+                ++blocked;
                 turn_ ^= 1;
                 state_.score *= -1;
             }
@@ -116,7 +116,7 @@ class Game {
         idx trial = 0;
 
         idx sumscore = 0;
-        for (; trial < samples; trial++) {
+        for (; trial < samples; ++trial) {
             if (trial - wins >= maxfails) {
                 break;
             }
@@ -127,8 +127,8 @@ class Game {
             // print(other.racks_[0]);
             // print(other.racks_[1]);
             idx winner = other.rollout(99);
-            if (winner == turn_) {
-                wins++;
+            if (winner == 0) {
+                ++wins;
             }
             // std::cerr << "trial score: " << other.score() << std::endl;
             sumscore += other.score();
@@ -138,7 +138,7 @@ class Game {
         return wins;
     }
 
-    movegen::Move thinkyThinky(idx max_moves = 10, const idx samples = 100) {
+    movegen::Move thinkyThinky(idx max_moves = 5, const idx samples = 50) {
         auto moves = movegen::genFromBoard(racks_[turn_], gaddag_, state_);
         std::set<movegen::Move, std::greater<movegen::Move>> moves_set(
             moves.begin(), moves.end());
@@ -157,7 +157,7 @@ class Game {
             }
             */
 
-            max_moves--;
+            --max_moves;
             if (max_moves == 0) break;
         }
         /*
@@ -179,7 +179,7 @@ class Game {
     // private:
    public:
     void checkWinner() {
-        for (chr i = 0; i < 27; i++) {
+        for (chr i = 0; i < 27; ++i) {
             state_.score += scores[i] * racks_[turn_ ^ 1][i];
         }
         // print(racks_[turn_]);
@@ -204,12 +204,12 @@ class Game {
         // print(container);
         // std::cerr << "population before: ";
         // print(population_);
-        for (idx adds = 0; adds < need; adds++) {
+        for (idx adds = 0; adds < need; ++adds) {
             std::discrete_distribution<idx> distribution(population_.begin(),
                                                          population_.end());
             idx drawn = distribution(*gen_);
-            container[drawn]++;
-            population_[drawn]--;
+            ++container[drawn];
+            --population_[drawn];
 
             if (std::accumulate(population_.begin(), population_.end(),
                                 idx(0)) == 0) {
@@ -231,4 +231,4 @@ class Game {
     idx winner_;
     const trie::Gaddag& gaddag_;
 };
-}
+}  // namespace puppup

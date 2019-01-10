@@ -22,7 +22,7 @@ class Gaddag {
    public:
     explicit Gaddag(std::istream& fin) {
         std::array<idx, 26> stridx;
-        for (idx i = 0; i < 26; i++) {
+        for (idx i = 0; i < 26; ++i) {
             stridx[idxstr[i] - 'a'] = i;
         }
         std::string s;
@@ -46,24 +46,24 @@ class Gaddag {
         nodes_.reserve(5 * words_.size());
         nodes_.emplace_back();  // root
         node_to_word_.reserve(5 * words_.size());
-        for (idx w = 0, wn = words_.size(); w < wn; w++) {
+        for (idx w = 0, wn = words_.size(); w < wn; ++w) {
             const auto& word = words_[w];
             const idx n = word.size();
-            for (idx start = -1; start < n; start++) {
+            for (idx start = -1; start < n; ++start) {
                 nodeid curr = 0;
-                for (idx j = start; j >= 0; j--) {
+                for (idx j = start; j >= 0; --j) {
                     const chr i = word[j];
                     add(curr, i);
                     curr = get(curr, i);
                 }
                 add(curr, rev_marker);
                 curr = get(curr, rev_marker);
-                for (idx j = start + 1; j < n; j++) {
+                for (idx j = start + 1; j < n; ++j) {
                     const chr i = word[j];
                     add(curr, i);
                     curr = get(curr, i);
                 }
-                while (curr >= node_to_word_.size()) {
+                while (curr >= idx(node_to_word_.size())) {
                     node_to_word_.push_back(invalid);
                 }
                 node_to_word_[curr] = w;
@@ -73,14 +73,14 @@ class Gaddag {
         next_sibling_.resize(n_nodes);
         first_child_.resize(n_nodes);
         val_.resize(n_nodes);
-        for (nodeid node = 0; node < n_nodes; node++) {
-            for (chr child_chr = 0; child_chr < 32; child_chr++) {
+        for (nodeid node = 0; node < n_nodes; ++node) {
+            for (chr child_chr = 0; child_chr < 32; ++child_chr) {
                 nodeid child = get(node, child_chr);
                 if (child != invalid) {
                     val_[child] = child_chr;
                 }
             }
-            for (chr child_chr = 0; child_chr < 32; child_chr++) {
+            for (chr child_chr = 0; child_chr < 32; ++child_chr) {
                 nodeid child = get(node, child_chr);
                 if (child != invalid) {
                     first_child_[node] = child;
@@ -88,7 +88,7 @@ class Gaddag {
                 }
             }
             nodeid last = invalid;
-            for (chr child_chr = 0; child_chr < 32; child_chr++) {
+            for (chr child_chr = 0; child_chr < 32; ++child_chr) {
                 nodeid child = get(node, child_chr);
                 if (child != invalid) {
                     if (last != invalid) {
@@ -127,6 +127,7 @@ class Gaddag {
     const bool exists(const nodeid curr) const {
         return node_to_word_[curr] != invalid;
     }
+    /*
     const nodeid nextSibling(const nodeid curr) const {
         return next_sibling_[curr];
     }
@@ -134,6 +135,7 @@ class Gaddag {
         return first_child_[curr];
     }
     const chr val(const nodeid curr) const { return val_[curr]; }
+    */
 
    private:
     std::vector<std::vector<chr>> words_;
@@ -143,5 +145,5 @@ class Gaddag {
     std::vector<nodeid> first_child_;
     std::vector<chr> val_;
 };
-}
-}
+}  // namespace trie
+}  // namespace puppup

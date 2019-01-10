@@ -47,10 +47,10 @@ void gen(Rack& r, idx step, idx cursor, idx orig_cursor, trie::nodeid node,
             chr j = gaddag.val(child);
             if (j >= emptiness) break;
             */
-        for (chr j = 0; j < emptiness; j++) {
+        for (chr j = 0; j < emptiness; ++j) {
             if (!gaddag.has(node, j)) continue;
             auto evaluate = [&](const chr i) {
-                r[i]--;
+                --r[i];
                 state.board[cursor] = j;
                 state.letter_score[cursor] = scores[i];
                 idx newblanks = blanks;
@@ -78,7 +78,7 @@ void gen(Rack& r, idx step, idx cursor, idx orig_cursor, trie::nodeid node,
                 }
                 state.board[cursor] = emptiness;
                 state.letter_score[cursor] = 0;
-                r[i]++;
+                ++r[i];
             };
             if (r[j]) evaluate(j);
             if (r[blank]) evaluate(blank);
@@ -112,7 +112,7 @@ idx orthogonal(idx step, idx cursor, const trie::Gaddag& gaddag,
         if (!gaddag.has(node, state.board[cursor])) return -1;
         node = gaddag.get(node, state.board[cursor]);
         cursor += step;
-        depth++;
+        ++depth;
     }
     if (!gaddag.has(node, trie::rev_marker)) return -1;
     node = gaddag.get(node, trie::rev_marker);
@@ -123,13 +123,13 @@ idx orthogonal(idx step, idx cursor, const trie::Gaddag& gaddag,
         if (!gaddag.has(node, state.board[cursor])) return -1;
         node = gaddag.get(node, state.board[cursor]);
         cursor += step;
-        depth++;
+        ++depth;
     }
     if (depth > 0 && !gaddag.exists(node)) return -1;
     score *= board::word_multiplier[orig_cursor];
     if (depth == 0) score = 0;
     return score;
 }
-}  // __impl
-}
-}
+}  // namespace __impl
+}  // namespace movegen
+}  // namespace puppup

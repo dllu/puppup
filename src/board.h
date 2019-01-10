@@ -140,9 +140,9 @@ struct State {
 
 inline void print(const State& state, const State& other) {
     std::cout << "Score: " << state.score << std::endl;
-    for (idx i = 0; i < 15; i++) {
+    for (idx i = 0; i < 15; ++i) {
         std::cout << "ABCDEFGHIJKLMNOPQRSTUV"[i] << " ";
-        for (idx j = 0; j < 15; j++) {
+        for (idx j = 0; j < 15; ++j) {
             if (state.board[i * 16 + j] != emptiness) {
                 if (state.board[i * 16 + j] == other.board[i * 16 + j]) {
                     if (state.letter_score[i * 16 + j] == 0) {
@@ -185,5 +185,5 @@ inline void print(const State& state, const State& other) {
 }
 
 inline void print(const State& state) { print(state, state); }
-}
-}
+}  // namespace board
+}  // namespace puppup

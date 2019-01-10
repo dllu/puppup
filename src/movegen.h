@@ -57,7 +57,7 @@ inline bool edge(idx cursor) {
     return cursor % 16 == 15 || cursor < 0 || cursor > 240 ||
            board::word_multiplier[cursor] == 0;
 }
-}  // __impl
+}  // namespace __impl
 
 inline void makeMove(board::State& state, Rack& rack, Rack& population,
                      const Move& mov, const trie::Gaddag& gaddag) {
@@ -80,10 +80,10 @@ inline void makeMove(board::State& state, Rack& rack, Rack& population,
         idx blank_cursor = (blanks & idx(0xffffLL)) - 1;
         blanks >>= idx(16LL);
         state.letter_score[blank_cursor] = 0;
-        rack[blank]--;
-        rack[state.board[blank_cursor]]++;
+        --rack[blank];
+        ++rack[state.board[blank_cursor]];
     }
-    for (chr c = 0; c < 32; c++) {
+    for (chr c = 0; c < 32; ++c) {
         if (rack[c] < 0) {
             population[c] += rack[c];
             rack[c] = 0;
@@ -108,8 +108,8 @@ inline Move moveCommand(idx step, idx cursor, std::string word_s,
     trie::nodeid node = gaddag.get(0, trie::rev_marker);
     idx placed = 0;
     for (char c : word_s) {
-        chr letter;
-        chr actual_letter;
+        chr letter = blank;
+        chr actual_letter = blank;
         if (c >= 'a' && c <= 'z') {
             actual_letter = letter = stridx[(idx)c];
         } else if (c >= 'A' && c <= 'Z') {
@@ -127,7 +127,7 @@ inline Move moveCommand(idx step, idx cursor, std::string word_s,
                       << std::endl;
         }
         if (state.board[cursor] == emptiness) {
-            placed++;
+            ++placed;
             multipliable_score +=
                 board::letter_multiplier[cursor] * scores[actual_letter];
             word_mult *= board::word_multiplier[cursor];
@@ -191,7 +191,7 @@ inline std::string toString(const Move& mov, board::State state,
     return ss.str();
 }
 
-inline void print(const Move& mov, board::State state,
+inline void print(const Move& mov, const board::State& state,
                   const trie::Gaddag& gaddag) {
     if (mov.word == -1) {
         std::cout << "CHANGE 7" << std::endl;
@@ -215,7 +215,7 @@ inline std::vector<Move> genFromBoard(Rack r, const trie::Gaddag& gaddag,
                                       const bool best_only = false) {
     std::array<bool, 256> buildable;
     buildable.fill(false);
-    for (idx i = 0; i < 240; i++) {
+    for (idx i = 0; i < 240; ++i) {
         if (state.board[i] != emptiness) {
             buildable[i - 16] = true;
             buildable[i + 16] = true;
@@ -223,7 +223,7 @@ inline std::vector<Move> genFromBoard(Rack r, const trie::Gaddag& gaddag,
             buildable[i + 1] = true;
         }
     }
-    for (idx i = 0; i < 240; i++) {
+    for (idx i = 0; i < 240; ++i) {
         if (state.board[i] != emptiness || __impl::edge(i)) {
             buildable[i] = false;
         }
@@ -269,7 +269,7 @@ inline std::vector<Move> genFromBoard(Rack r, const trie::Gaddag& gaddag,
                     // print(outputs[k], state, gaddag);
                 }
                 last_n = outputs.size();
-                n_buildable++;
+                ++n_buildable;
             }
         }
     }
@@ -280,5 +280,5 @@ inline std::vector<Move> genFromBoard(Rack r, const trie::Gaddag& gaddag,
     return outputs;
 }
 
-}  // movegen
-}
+}  // namespace movegen
+}  // namespace puppup

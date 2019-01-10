@@ -14,7 +14,7 @@
 
 std::unordered_map<std::string, std::pair<idx, idx>> genCoords() {
     std::unordered_map<std::string, std::pair<idx, idx>> coords;
-    for (idx i = 0; i < 256; i++) {
+    for (idx i = 0; i < 256; ++i) {
         idx x = i % 16;
         idx y = i / 16;
         {
@@ -52,7 +52,7 @@ int main(int argc, char** argv) {
     std::cerr << "generated dictionary" << std::endl;
     std::array<idx, 128> stridx;
     stridx.fill(30);
-    for (idx i = 0; i < 32; i++) {
+    for (idx i = 0; i < 32; ++i) {
         stridx[puppup::idxstr[i]] = i;
     }
     auto coords = genCoords();

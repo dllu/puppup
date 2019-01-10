@@ -18,6 +18,7 @@ You need CMake and a reasonably new GCC or Clang compiler supporting C++14.
 
 ```
 mkdir build
+cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make
 ```
