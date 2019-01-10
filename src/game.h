@@ -32,10 +32,10 @@ class Game {
             population_[i] -= rack[i];
         }
     }
-    void setRack(Rack r) {
+    void setRack(idx turn, Rack r) {
         for (chr i = 0; i < 32; i++) {
-            population_[i] += racks_[turn_][i] - r[i];
-            racks_[turn_][i] = r[i];
+            population_[i] += racks_[turn][i] - r[i];
+            racks_[turn][i] = r[i];
         }
     }
     void genRack(idx r) {
@@ -121,12 +121,13 @@ class Game {
                 break;
             }
             Game other(*this);
-            other.genRack(1);
+            other.setRack(turn_ ^ 1, empty_rack);
+            other.genRack(turn_ ^ 1);
             other.ply(mov);
             // print(other.racks_[0]);
             // print(other.racks_[1]);
-            idx winner = other.rollout(999);
-            if (winner == 0) {
+            idx winner = other.rollout(99);
+            if (winner == turn_) {
                 wins++;
             }
             // std::cerr << "trial score: " << other.score() << std::endl;
@@ -137,26 +138,41 @@ class Game {
         return wins;
     }
 
-    movegen::Move thinkyThinky(idx max_moves = 15, const idx samples = 500) {
+    movegen::Move thinkyThinky(idx max_moves = 10, const idx samples = 100) {
         auto moves = movegen::genFromBoard(racks_[turn_], gaddag_, state_);
         std::set<movegen::Move, std::greater<movegen::Move>> moves_set(
             moves.begin(), moves.end());
-        movegen::Move best = moves[0];
-        idx best_prob = -9999999999LL;
-        idx maxfails = samples;
+        movegen::Move best = *moves_set.begin();
+        //auto best_prob = -9999999999LL;
+        //idx maxfails = samples;
         for (auto& mov : moves_set) {
             movegen::print(mov, state_, gaddag_);
+            /*
             Game other(*this);
-            const idx prob = other.winProbability(samples, mov, maxfails);
+            const auto prob = other.winProbability(samples, mov, maxfails);
             if (prob > best_prob) {
                 best = mov;
                 best_prob = prob;
                 maxfails = samples - prob;
             }
+            */
 
             max_moves--;
             if (max_moves == 0) break;
         }
+        /*
+        {
+            Game other(*this);
+            setRack(turn_, empty_rack);
+            genRack(turn_);
+            movegen::Move change = {0, -1, 0, 0, 0};
+            movegen::print(change, state_, gaddag_);
+            const auto prob = other.winProbability(samples, change, maxfails);
+            if (prob > best_prob) {
+                return change;
+            }
+        }
+        */
         return best;
     }
 
@@ -166,6 +182,9 @@ class Game {
         for (chr i = 0; i < 27; i++) {
             state_.score += scores[i] * racks_[turn_ ^ 1][i];
         }
+        // print(racks_[turn_]);
+        // print(racks_[turn_ ^ 1]);
+        // std::cerr << state_.score << std::endl;
         if (state_.score > 0) {
             winner_ = turn_;
         } else if (state_.score < 0) {

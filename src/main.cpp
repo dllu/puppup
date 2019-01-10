@@ -45,8 +45,8 @@ int main(int argc, char** argv) {
     if (argc < 2) {
         std::cerr << "USAGE: ./puppup /path/to/dictionary" << std::endl;
     }
-    std::random_device rd;
-    auto gen = std::make_shared<std::mt19937>(rd());
+    // std::random_device rd;
+    auto gen = std::make_shared<std::mt19937>(/*rd()*/);
     std::ifstream fin(argv[1]);
     auto gaddag = puppup::trie::Gaddag(fin);
     std::cerr << "generated dictionary" << std::endl;
@@ -70,14 +70,11 @@ int main(int argc, char** argv) {
                 return;
             }
             auto tic = std::chrono::steady_clock::now();
-            auto moves = puppup::movegen::genFromBoard(r, gaddag, state);
-            std::sort(moves.begin(), moves.end(),
-                      std::greater<puppup::movegen::Move>());
 
-            auto toc = std::chrono::steady_clock::now();
             puppup::movegen::Move best = game.thinkyThinky();
 
-            auto tac = std::chrono::steady_clock::now();
+            auto toc = std::chrono::steady_clock::now();
+            // auto tac = std::chrono::steady_clock::now();
 
             {
                 auto state2 = game.state_;
@@ -86,10 +83,8 @@ int main(int argc, char** argv) {
             }
 
             std::chrono::duration<double> elapsed = toc - tic;
-            std::cerr << "Moves generated: " << moves.size() << " in "
-                      << elapsed.count() << " seconds" << std::endl;
-            std::chrono::duration<double> elapsed2 = tac - toc;
-            std::cerr << "Best computed in " << elapsed2.count() << " seconds"
+            // std::chrono::duration<double> elapsed2 = tac - toc;
+            std::cerr << "Best computed in " << elapsed.count() << " seconds"
                       << std::endl;
         };
         std::stringstream ss(s);
@@ -101,10 +96,8 @@ int main(int argc, char** argv) {
             for (char c : argument) {
                 r[stridx[c]]++;
             }
-            game.setRack(r);
-            game.turn_ ^= 1;
-            game.setRack(puppup::empty_rack);
-            game.turn_ ^= 1;
+            game.setRack(game.turn_, r);
+            game.setRack(game.turn_ ^ 1, puppup::empty_rack);
             go();
         } else if (coords.count(command)) {
             auto step_cur = coords[command];

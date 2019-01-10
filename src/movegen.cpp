@@ -8,7 +8,8 @@ void gen(Rack& r, idx step, idx cursor, idx orig_cursor, trie::nodeid node,
          const trie::Gaddag& gaddag, board::State& state,
          idx non_multipliable_score, idx multipliable_score, idx word_mult,
          std::vector<Move>& outputs, const bool best_only,
-         std::array<idx, 256 * 32>& orthogonal_memo, idx blanks, idx placed) {
+         std::array<idx, 256 * 32 * 2>& orthogonal_memo, idx blanks,
+         idx placed) {
     // we have gone far enough in the reverse direction, time to turn around
     if (cursor != orig_cursor && step < 0 &&
         (gaddag.has(node, trie::rev_marker) &&
@@ -19,10 +20,10 @@ void gen(Rack& r, idx step, idx cursor, idx orig_cursor, trie::nodeid node,
             best_only, orthogonal_memo, blanks, placed);
     }
     // we have found a valid word
-    if (!(step == 1 && placed == 1) && step > 0 && gaddag.exists(node) &&
+    if (placed > 0 && step > 0 && gaddag.exists(node) &&
         (edge(cursor) || state.board[cursor] == emptiness)) {
         idx score = non_multipliable_score + multipliable_score * word_mult;
-        if (placed >= 7) score += 50;
+        if (placed >= 7) score += board::bingo_bonus;
         if (!best_only || outputs.empty()) {
             outputs.push_back(
                 {score, gaddag.nodeToWord(node), cursor, step, blanks});
@@ -53,14 +54,18 @@ void gen(Rack& r, idx step, idx cursor, idx orig_cursor, trie::nodeid node,
                 state.board[cursor] = j;
                 state.letter_score[cursor] = scores[i];
                 idx newblanks = blanks;
+                idx blankness = 0;
                 if (i == blank) {
+                    blankness = 1;
                     newblanks <<= idx(16LL);
                     newblanks |= cursor + 1;
                 }
-                idx orth_score = orthogonal_memo[cursor * 32 + j];
+                idx orth_score =
+                    orthogonal_memo[2 * (cursor * 32 + j) + blankness];
                 if (orth_score == -2) {
                     orth_score = orthogonal(turn(step), cursor, gaddag, state);
-                    orthogonal_memo[cursor * 32 + j] = orth_score;
+                    orthogonal_memo[2 * (cursor * 32 + j) + blankness] =
+                        orth_score;
                 }
                 if (orth_score >= 0) {
                     gen(r, step, cursor + step, orig_cursor,

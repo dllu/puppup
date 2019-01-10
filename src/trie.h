@@ -20,7 +20,7 @@ class Gaddag {
     };
 
    public:
-    Gaddag(std::istream& fin) {
+    explicit Gaddag(std::istream& fin) {
         std::array<idx, 26> stridx;
         for (idx i = 0; i < 26; i++) {
             stridx[idxstr[i] - 'a'] = i;
@@ -29,7 +29,7 @@ class Gaddag {
         words_.reserve(200'000);
         while (std::getline(fin, s)) {
             for (char& c : s) {
-                if (c >= 'A' || c <= 'Z') {
+                if (c >= 'A' && c <= 'Z') {
                     c += 'a' - 'A';
                 }
                 if (c < 'a' || c > 'z') {

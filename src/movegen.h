@@ -47,19 +47,23 @@ void gen(Rack& r, idx step, idx cursor, idx orig_cursor, trie::nodeid node,
          const trie::Gaddag& gaddag, board::State& state,
          idx non_multipliable_score, idx multipliable_score, idx word_mult,
          std::vector<Move>& outputs, const bool best_only,
-         std::array<idx, 256 * 32>& orthogonal_memo, idx blanks = 0,
+         std::array<idx, 256 * 32 * 2>& orthogonal_memo, idx blanks = 0,
          idx placed = 0);
 
 idx orthogonal(idx step, idx cursor, const trie::Gaddag& gaddag,
                const board::State& state);
 
 inline bool edge(idx cursor) {
-    return cursor % 16 == 15 || cursor < 0 || cursor > 240;
+    return cursor % 16 == 15 || cursor < 0 || cursor > 240 ||
+           board::word_multiplier[cursor] == 0;
 }
 }  // __impl
 
 inline void makeMove(board::State& state, Rack& rack, Rack& population,
                      const Move& mov, const trie::Gaddag& gaddag) {
+    if (mov.word == -1) {
+        return;
+    }
     const auto& s = gaddag.getStringFromWord(mov.word);
     idx cursor = mov.cursor - s.size() * mov.step;
 
@@ -155,9 +159,9 @@ inline Move moveCommand(idx step, idx cursor, std::string word_s,
     const idx bingo = placed >= 7 ? 50 : 0;
     const idx score =
         non_multipliable_score + word_mult * multipliable_score + bingo;
-    std::cerr << "nms: " << non_multipliable_score << std::endl;
-    std::cerr << "ms: " << multipliable_score << std::endl;
-    std::cerr << "mult: " << word_mult << std::endl;
+    // std::cerr << "nms: " << non_multipliable_score << std::endl;
+    // std::cerr << "ms: " << multipliable_score << std::endl;
+    // std::cerr << "mult: " << word_mult << std::endl;
     const idx wordid = node == -1 ? -1 : gaddag.nodeToWord(node);
     return Move{score, wordid, cursor, step, blanks};
 }
@@ -189,6 +193,9 @@ inline std::string toString(const Move& mov, board::State state,
 
 inline void print(const Move& mov, board::State state,
                   const trie::Gaddag& gaddag) {
+    if (mov.word == -1) {
+        std::cout << "CHANGE 7" << std::endl;
+    }
     std::cout << toString(mov, state, gaddag) << " " << mov.score << std::endl;
 }
 
@@ -197,7 +204,7 @@ inline std::vector<Move> genFromIdx(Rack r, const trie::Gaddag& gaddag,
                                     const idx cursor = board::start,
                                     const bool best_only = false) {
     std::vector<Move> outputs;
-    auto orthogonal_memo = constArray<256 * 32>(-2);
+    auto orthogonal_memo = constArray<256 * 32 * 2>(-2);
     __impl::gen(r, -1, cursor, cursor, 0, gaddag, state, 0, 0, 1, outputs,
                 best_only, orthogonal_memo);
     return outputs;
@@ -224,8 +231,9 @@ inline std::vector<Move> genFromBoard(Rack r, const trie::Gaddag& gaddag,
 
     std::vector<Move> outputs;
     idx n_buildable = 0;
+    idx last_n = 0;
     for (idx step : {1, 16}) {
-        auto orthogonal_memo = constArray<256 * 32>(-2);
+        auto orthogonal_memo = constArray<256 * 32 * 2>(-2);
         for (idx i = 0; i < 240; i++) {
             if (buildable[i]) {
                 bool needs_both_directions = false;
@@ -241,14 +249,26 @@ inline std::vector<Move> genFromBoard(Rack r, const trie::Gaddag& gaddag,
                         j -= step;
                     }
                 }
+                // if (step == 1) std::cerr << "left ";
+                // if (step == 16) std::cerr << "down ";
                 if (needs_both_directions) {
+                    // std::cerr << "generating from " << i / 16 << ", " << i %
+                    // 16
+                    // << " with both directions" << std::endl;
                     __impl::gen(r, -step, i, i, 0, gaddag, state, 0, 0, 1,
                                 outputs, best_only, orthogonal_memo);
                 } else {
+                    // std::cerr << "generating from " << i / 16 << ", " << i %
+                    // 16
+                    // << " in forward directions" << std::endl;
                     __impl::gen(r, step, i, i, gaddag.get(0, trie::rev_marker),
                                 gaddag, state, 0, 0, 1, outputs, best_only,
                                 orthogonal_memo);
                 }
+                for (idx k = last_n; k < outputs.size(); k++) {
+                    // print(outputs[k], state, gaddag);
+                }
+                last_n = outputs.size();
                 n_buildable++;
             }
         }
@@ -256,6 +276,7 @@ inline std::vector<Move> genFromBoard(Rack r, const trie::Gaddag& gaddag,
     if (!n_buildable) {
         return genFromIdx(r, gaddag);
     }
+    // std::cerr << "outputs: " << outputs.size() << std::endl;
     return outputs;
 }
 
