@@ -16,8 +16,9 @@
 std::unordered_map<std::string, std::pair<idx, idx>> genCoords() {
     std::unordered_map<std::string, std::pair<idx, idx>> coords;
     for (idx i = 0; i < 256; ++i) {
-        idx x = i % 16;
-        idx y = i / 16;
+        idx x = i % 16 - puppup::board::board_min;
+        idx y = i / 16 - puppup::board::board_min;
+        if (x < 0 || y < 0) continue;
         {
             std::stringstream ss;
             ss << x + 1 << puppup::abc[y];
